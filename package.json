@@ -10,13 +10,17 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.8.0",
+    "@deepgram/sdk": "^5.8.0",
     "@google/genai": "^2.18.0",
     "@prisma/client": "^6.19.3",
+    "@remotion/media-utils": "^4.0.516",
+    "@remotion/player": "^4.0.516",
     "@supabase/supabase-js": "^2.112.3",
     "next": "16.3.2",
     "prisma": "^6.19.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "remotion": "^4.0.516",
     "stripe": "^22.5.0",
     "svix": "^2.0.0"
   },

@@ -1,69 +1,124 @@
-import Image from "next/image";
+'use client'
+
+import React, { useState } from 'react'
+import dynamic from 'next/dynamic'
+import type { MainVideoProps } from '@/remotion/MainVideo'
+
+const VideoPlayer = dynamic(
+  () => import('@/components/VideoPlayer').then((mod) => mod.VideoPlayer),
+  { ssr: false }
+)
 
 export default function Home() {
+  const [topic, setTopic] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [videoProps, setVideoProps] = useState<MainVideoProps>({
+    title: 'Your AI Short Preview',
+    scenes: [
+      {
+        sceneNumber: 1,
+        caption: 'Enter a topic to generate your short video!',
+        voiceover: '',
+        graphicType: 'stock_chart',
+        graphicData: { label: 'GROWTH', value: '100%', trend: 'up' },
+      },
+    ],
+    audioUrl: '',
+  })
+
+  const handleGenerate = async () => {
+    console.log('--> Generate button clicked! Topic value:', `"${topic}"`)
+
+    if (!topic || !topic.trim()) {
+      setErrorMsg('Please enter a topic before generating.')
+      return
+    }
+
+    setLoading(true)
+    setErrorMsg('')
+
+    try {
+      console.log('--> Fetching script for topic:', topic)
+      const scriptRes = await fetch('/api/generate-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic.trim(), niche: 'finance' }),
+      })
+
+      if (!scriptRes.ok) {
+        const err = await scriptRes.json()
+        throw new Error(err.error || `Script generation failed (${scriptRes.status})`)
+      }
+
+      const scriptData = await scriptRes.json()
+      console.log('--> Script generated successfully:', scriptData)
+
+      console.log('--> Fetching audio...')
+      const audioRes = await fetch('/api/generate-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: scriptData.script.voiceoverScript }),
+      })
+
+      if (!audioRes.ok) {
+        const err = await audioRes.json()
+        throw new Error(err.error || `Audio generation failed (${audioRes.status})`)
+      }
+
+      const audioData = await audioRes.json()
+      console.log('--> Audio generated successfully!')
+
+      setVideoProps({
+        title: scriptData.script.title,
+        scenes: scriptData.script.scenes,
+        audioUrl: audioData.audioUrl,
+      })
+    } catch (err: unknown) {
+      const error = err as Error
+      console.error('Generation Pipeline Error:', error)
+      setErrorMsg(error.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-slate-950 text-slate-100 p-8 flex flex-col md:flex-row gap-8 items-center justify-center">
+      <div className="w-full max-w-lg space-y-6 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+        <h1 className="text-3xl font-black text-indigo-400">CreatorStack AI</h1>
+        <p className="text-slate-400">Programmatic Short Video Generation</p>
+
+        {errorMsg && (
+          <div className="bg-red-950/80 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm">
+            <strong>Error:</strong> {errorMsg}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-300">Video Topic</label>
+          <input
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Top 3 Tech Stocks to Buy"
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 text-slate-100"
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={loading}
+          className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-bold rounded-xl transition duration-200 cursor-pointer disabled:cursor-not-allowed"
+        >
+          {loading ? 'Generating Script & Audio...' : 'Generate Short Video'}
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center">
+        <VideoPlayer props={videoProps} />
+      </div>
+    </main>
+  )
 }

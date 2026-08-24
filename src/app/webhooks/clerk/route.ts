@@ -7,10 +7,9 @@ export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET
 
   if (!WEBHOOK_SECRET) {
-    throw new Error('Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local')
+    throw new Error('Please add WEBHOOK_SECRET from Clerk Dashboard to .env')
   }
 
-  // Get the headers
   const headerPayload = await headers()
   const svix_id = headerPayload.get('svix-id')
   const svix_timestamp = headerPayload.get('svix-timestamp')
@@ -20,61 +19,55 @@ export async function POST(req: Request) {
     return new Response('Error occurred -- no svix headers', { status: 400 })
   }
 
-  // Get the body
   const payload = await req.json()
   const body = JSON.stringify(payload)
-
-  // Verify the payload
   const wh = new Webhook(WEBHOOK_SECRET)
-  let evt: WebhookEvent
 
+  let evt: WebhookEvent
   try {
     evt = wh.verify(body, {
       'svix-id': svix_id,
       'svix-timestamp': svix_timestamp,
       'svix-signature': svix_signature,
     }) as WebhookEvent
-  } catch (err) {
-    console.error('Error verifying webhook:', err)
-    return new Response('Error occurred', { status: 400 })
+  } catch {
+    return new Response('Error verifying webhook', { status: 400 })
   }
 
   const eventType = evt.type
 
-  // Handle user sync events with Prisma
-  if (eventType === 'user.created' || eventType === 'user.updated') {
-    const { id: clerkId, email_addresses, first_name, last_name, image_url } = evt.data
-    const primaryEmail = email_addresses?.[0]?.email_address
-
-    if (!primaryEmail) {
-      return new Response('No email provided', { status: 400 })
-    }
-
-    // @ts-expect-error - Prisma client type caching
-    await prisma.user.upsert({
-      where: { clerkId: clerkId },
-      update: {
-        email: primaryEmail,
-        firstName: first_name ?? '',
-        lastName: last_name ?? '',
-        imageUrl: image_url ?? '',
+  if (eventType === 'user.created') {
+    const data = evt.data
+    await prisma.user.create({
+      data: {
+        clerkId: data.id,
+        email: data.email_addresses[0]?.email_address || '',
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        imageUrl: data.image_url || '',
+        credits: 10,
       },
-      create: {
-        clerkId: clerkId,
-        email: primaryEmail,
-        firstName: first_name ?? '',
-        lastName: last_name ?? '',
-        imageUrl: image_url ?? '',
+    })
+  }
+
+  if (eventType === 'user.updated') {
+    const data = evt.data
+    await prisma.user.update({
+      where: { clerkId: data.id },
+      data: {
+        email: data.email_addresses[0]?.email_address || '',
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        imageUrl: data.image_url || '',
       },
     })
   }
 
   if (eventType === 'user.deleted') {
-    const clerkId = evt.data.id
-    if (clerkId) {
-      // @ts-expect-error - Prisma client type caching
+    const data = evt.data
+    if (data.id) {
       await prisma.user.delete({
-        where: { clerkId: clerkId },
+        where: { clerkId: data.id },
       })
     }
   }
