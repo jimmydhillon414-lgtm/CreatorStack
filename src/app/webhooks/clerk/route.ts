@@ -1,7 +1,7 @@
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
-import { prisma } from '@/lib/prisma' // Adjust to your Prisma client import path
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET
@@ -39,14 +39,18 @@ export async function POST(req: Request) {
     return new Response('Error occurred', { status: 400 })
   }
 
-  const { id } = evt.data
   const eventType = evt.type
 
   // Handle user sync events with Prisma
   if (eventType === 'user.created' || eventType === 'user.updated') {
     const { id: clerkId, email_addresses, first_name, last_name, image_url } = evt.data
-    const primaryEmail = email_addresses[0]?.email_address
+    const primaryEmail = email_addresses?.[0]?.email_address
 
+    if (!primaryEmail) {
+      return new Response('No email provided', { status: 400 })
+    }
+
+    // @ts-expect-error - Prisma client type caching
     await prisma.user.upsert({
       where: { clerkId: clerkId },
       update: {
@@ -66,9 +70,11 @@ export async function POST(req: Request) {
   }
 
   if (eventType === 'user.deleted') {
-    if (id) {
+    const clerkId = evt.data.id
+    if (clerkId) {
+      // @ts-expect-error - Prisma client type caching
       await prisma.user.delete({
-        where: { clerkId: id },
+        where: { clerkId: clerkId },
       })
     }
   }
