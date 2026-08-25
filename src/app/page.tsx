@@ -20,8 +20,7 @@ export default function Home() {
         sceneNumber: 1,
         caption: 'Enter a topic to generate your short video!',
         voiceover: '',
-        graphicType: 'stock_chart',
-        graphicData: { label: 'GROWTH', value: '100%', trend: 'up' },
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-playful-kitten-sitting-on-a-floor-41527-large.mp4',
       },
     ],
     audioUrl: '',
@@ -43,15 +42,33 @@ export default function Home() {
       const scriptRes = await fetch('/api/generate-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), niche: 'finance' }),
+        body: JSON.stringify({ topic: topic.trim() }),
       })
 
+      const scriptData = await scriptRes.json()
+
+      // Gracefully handle Gemini 429 Rate Limit/Quota errors with a local fallback
       if (!scriptRes.ok) {
-        const err = await scriptRes.json()
-        throw new Error(err.error || `Script generation failed (${scriptRes.status})`)
+        if (scriptData.error?.includes('429') || scriptData.error?.includes('quota') || scriptData.error?.includes('RESOURCE_EXHAUSTED')) {
+          console.warn('Gemini API quota reached. Triggering fallback video structure...')
+          setVideoProps({
+            title: topic.trim(),
+            scenes: [
+              {
+                sceneNumber: 1,
+                caption: topic.trim().toUpperCase(),
+                voiceover: `Here is a quick overview about ${topic}.`,
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-playful-kitten-sitting-on-a-floor-41527-large.mp4',
+              },
+            ],
+            audioUrl: '',
+          })
+          setErrorMsg('Rate limit hit on AI API. Previewing fallback video template.')
+          return
+        }
+        throw new Error(scriptData.error || `Script generation failed (${scriptRes.status})`)
       }
 
-      const scriptData = await scriptRes.json()
       console.log('--> Script generated successfully:', scriptData)
 
       console.log('--> Fetching audio...')
@@ -91,7 +108,7 @@ export default function Home() {
 
         {errorMsg && (
           <div className="bg-red-950/80 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm">
-            <strong>Error:</strong> {errorMsg}
+            <strong>Notice:</strong> {errorMsg}
           </div>
         )}
 
@@ -101,7 +118,7 @@ export default function Home() {
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. Top 3 Tech Stocks to Buy"
+            placeholder="e.g. cute running puppies"
             className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 text-slate-100"
           />
         </div>
@@ -117,7 +134,8 @@ export default function Home() {
       </div>
 
       <div className="flex flex-col items-center">
-        <VideoPlayer props={videoProps} />
+        {/* Forces player component update whenever video props or audio change */}
+        <VideoPlayer key={videoProps.audioUrl || videoProps.title + (videoProps.scenes[0]?.videoUrl || '')} props={videoProps} />
       </div>
     </main>
   )

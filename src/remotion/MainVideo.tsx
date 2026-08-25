@@ -1,16 +1,12 @@
 import React from 'react'
-import { AbsoluteFill, Audio, interpolate, useCurrentFrame } from 'remotion'
+import { AbsoluteFill, Audio, Img, Video, useCurrentFrame } from 'remotion'
 
 export type Scene = {
   sceneNumber: number
   caption: string
   voiceover: string
-  graphicType: string
-  graphicData?: {
-    label?: string
-    value?: string
-    trend?: string
-  }
+  videoUrl?: string
+  imageUrl?: string
 }
 
 export type MainVideoProps = {
@@ -22,37 +18,52 @@ export type MainVideoProps = {
 export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl }) => {
   const frame = useCurrentFrame()
 
-  const opacity = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' })
-  const scale = interpolate(frame, [0, 15], [0.95, 1], { extrapolateRight: 'clamp' })
-
-  const currentScene = scenes[0] || { caption: title, graphicData: {} }
+  // 90 frames = ~3 seconds per scene at 30fps
+  const sceneDuration = 90
+  const currentSceneIndex = Math.min(
+    Math.floor(frame / sceneDuration),
+    Math.max(0, scenes.length - 1)
+  )
+  const currentScene = scenes[currentSceneIndex] || scenes[0] || { caption: title }
 
   return (
-    <AbsoluteFill className="bg-slate-950 text-white flex flex-col items-center justify-between p-12 font-sans">
+    <AbsoluteFill className="bg-slate-950 text-white flex flex-col items-center justify-between p-10 font-sans relative overflow-hidden">
+      {/* Visual Background Rendering */}
+      {currentScene?.videoUrl ? (
+        <Video
+          src={currentScene.videoUrl}
+          className="absolute inset-0 w-full h-full object-cover opacity-75"
+          muted
+        />
+      ) : currentScene?.imageUrl ? (
+        <Img
+          src={currentScene.imageUrl}
+          className="absolute inset-0 w-full h-full object-cover opacity-75"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-black" />
+      )}
+
+      {/* Audio Layer */}
       {audioUrl ? <Audio src={audioUrl} /> : null}
 
-      <div className="mt-12 bg-indigo-600/30 border border-indigo-500/50 rounded-full px-6 py-2">
-        <span className="text-indigo-400 font-bold uppercase tracking-wider text-xl">Finance AI Niche</span>
+      {/* Top Badge */}
+      <div className="relative z-10 mt-6 bg-indigo-600/70 backdrop-blur-md rounded-full px-5 py-2 border border-indigo-400/40">
+        <span className="text-white font-bold uppercase tracking-wider text-xs">
+          CreatorStack AI
+        </span>
       </div>
 
-      <div 
-        style={{ opacity, transform: `scale(${scale})` }}
-        className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6"
-      >
-        <h2 className="text-3xl font-extrabold text-slate-100 leading-tight">
+      {/* Caption Overlay */}
+      <div className="relative z-10 w-full max-w-xs bg-slate-950/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-6 shadow-2xl text-center">
+        <h2 className="text-xl font-black text-amber-300 uppercase tracking-wide leading-tight">
           {currentScene.caption}
         </h2>
-
-        {currentScene.graphicData?.label && (
-          <div className="bg-slate-800/80 rounded-2xl p-6 border border-slate-700/50">
-            <p className="text-slate-400 text-lg uppercase tracking-wide">{currentScene.graphicData.label}</p>
-            <p className="text-5xl font-black text-emerald-400 mt-2">{currentScene.graphicData.value}</p>
-          </div>
-        )}
       </div>
 
-      <div className="mb-16 text-center max-w-lg">
-        <p className="text-4xl font-black tracking-tight text-amber-400 uppercase drop-shadow-md">
+      {/* Title Bar */}
+      <div className="relative z-10 mb-10 text-center">
+        <p className="text-lg font-bold text-slate-200 drop-shadow-md">
           {title}
         </p>
       </div>
