@@ -1,53 +1,83 @@
 import { NextRequest, NextResponse } from "next/server";
+import https from "https";
+import http from "http";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  let targetUrl = searchParams.get("url");
+export async function GET(req: NextRequest) {
+  const mediaUrl = req.nextUrl.searchParams.get("url");
 
-  if (!targetUrl) {
+  if (!mediaUrl) {
     return new NextResponse("Missing URL parameter", { status: 400 });
   }
 
-  try {
-    // Strip trailing timestamp fragments (#t=0,15)
-    targetUrl = targetUrl.split("#")[0];
+  return new Promise<NextResponse>((resolve) => {
+    const parsedUrl = new URL(mediaUrl);
+    const client = parsedUrl.protocol === "https:" ? https : http;
 
-    // Fetch media with complete browser headers
-    const res = await fetch(targetUrl, {
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: "GET",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        Accept: "video/webm,video/mp4,video/*;q=0.9,*/*;q=0.8",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
-        Referer: "https://mixkit.co/",
-        Origin: "https://mixkit.co",
-        "Sec-Fetch-Dest": "video",
-        "Sec-Fetch-Mode": "no-cors",
-        "Sec-Fetch-Site": "cross-site",
+        "Referer": "https://mixkit.co/",
+        "Origin": "https://mixkit.co",
       },
-    });
+    };
 
-    if (!res.ok) {
-      return new NextResponse(`Upstream failed: ${res.statusText}`, {
-        status: res.status,
+    const proxyReq = client.request(options, (res) => {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        // Handle redirects if any
+        return resolve(
+          NextResponse.redirect(
+            new URL(`/api/video-proxy?url=${encodeURIComponent(res.headers.location)}`, req.url)
+          )
+        );
+      }
+
+      if (res.statusCode !== 200 && res.statusCode !== 206) {
+        return resolve(
+          new NextResponse(`Proxy fetch failed with status: ${res.statusCode}`, {
+            status: res.statusCode || 500,
+          })
+        );
+      }
+
+      // Convert Node stream to Web ReadableStream
+      const stream = new ReadableStream({
+        start(controller) {
+          res.on("data", (chunk) => controller.enqueue(chunk));
+          res.on("end", () => controller.close());
+          res.on("error", (err) => controller.error(err));
+        },
       });
-    }
 
-    // Convert to ArrayBuffer to prevent stream inspection blocking
-    const buffer = await res.arrayBuffer();
+      const responseHeaders = new Headers();
+      responseHeaders.set("Content-Type", res.headers["content-type"] || "video/mp4");
+      responseHeaders.set("Access-Control-Allow-Origin", "*");
+      responseHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+      responseHeaders.set("Accept-Ranges", "bytes");
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": res.headers.get("content-type") || "video/mp4",
-        "Content-Length": buffer.byteLength.toString(),
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Cache-Control": "public, max-age=3600, immutable",
-      },
+      if (res.headers["content-length"]) {
+        responseHeaders.set("Content-Length", res.headers["content-length"]);
+      }
+
+      resolve(
+        new NextResponse(stream, {
+          status: 200,
+          headers: responseHeaders,
+        })
+      );
     });
-  } catch (error) {
-    console.error("Proxy error:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+
+    proxyReq.on("error", (err) => {
+      console.error("Proxy connection error:", err);
+      resolve(new NextResponse("Internal Proxy Error", { status: 500 }));
+    });
+
+    proxyReq.end();
+  });
 }

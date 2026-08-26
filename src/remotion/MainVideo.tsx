@@ -7,6 +7,8 @@ export type Scene = {
   voiceover: string
   videoUrl?: string
   imageUrl?: string
+  graphicType?: string
+  graphicData?: Record<string, unknown>
 }
 
 export type MainVideoProps = {
@@ -15,18 +17,14 @@ export type MainVideoProps = {
   audioUrl?: string
 }
 
-// Helper to format URLs through our local API proxy
-const getProxiedUrl = (url?: string) => {
-  if (!url) return undefined
-  // Avoid double-proxying if the URL is already local
-  if (url.startsWith('/')) return url
-  return `/api/video-proxy?url=${encodeURIComponent(url)}`
+const getProxiedUrl = (originalUrl?: string) => {
+  if (!originalUrl) return undefined
+  return `/api/video-proxy?url=${encodeURIComponent(originalUrl)}`
 }
 
 export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl }) => {
   const frame = useCurrentFrame()
 
-  // 90 frames = ~3 seconds per scene at 30fps
   const sceneDuration = 90
   const currentSceneIndex = Math.min(
     Math.floor(frame / sceneDuration),
@@ -34,24 +32,23 @@ export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl })
   )
   const currentScene = scenes[currentSceneIndex] || scenes[0] || { caption: title }
 
-  // Proxy external URLs to clear CORS/ORB restrictions
-  const proxiedVideoUrl = getProxiedUrl(currentScene?.videoUrl)
-  const proxiedImageUrl = getProxiedUrl(currentScene?.imageUrl)
+  const videoUrl = getProxiedUrl(currentScene?.videoUrl)
+  const imageUrl = getProxiedUrl(currentScene?.imageUrl)
   const proxiedAudioUrl = getProxiedUrl(audioUrl)
 
   return (
     <AbsoluteFill className="bg-slate-950 text-white flex flex-col items-center justify-between p-10 font-sans relative overflow-hidden">
       {/* Visual Background Rendering */}
-      {proxiedVideoUrl ? (
+      {videoUrl ? (
         <OffthreadVideo
-          src={proxiedVideoUrl}
+          src={videoUrl}
           className="absolute inset-0 w-full h-full object-cover opacity-75"
           muted
           onError={(err) => console.error("Remotion OffthreadVideo error:", err)}
         />
-      ) : proxiedImageUrl ? (
+      ) : imageUrl ? (
         <Img
-          src={proxiedImageUrl}
+          src={imageUrl}
           className="absolute inset-0 w-full h-full object-cover opacity-75"
         />
       ) : (
