@@ -1,5 +1,5 @@
 import React from 'react'
-import { AbsoluteFill, Audio, Img, Video, useCurrentFrame } from 'remotion'
+import { AbsoluteFill, Audio, Img, OffthreadVideo, useCurrentFrame } from 'remotion'
 
 export type Scene = {
   sceneNumber: number
@@ -15,6 +15,14 @@ export type MainVideoProps = {
   audioUrl?: string
 }
 
+// Helper to format URLs through our local API proxy
+const getProxiedUrl = (url?: string) => {
+  if (!url) return undefined
+  // Avoid double-proxying if the URL is already local
+  if (url.startsWith('/')) return url
+  return `/api/video-proxy?url=${encodeURIComponent(url)}`
+}
+
 export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl }) => {
   const frame = useCurrentFrame()
 
@@ -26,18 +34,24 @@ export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl })
   )
   const currentScene = scenes[currentSceneIndex] || scenes[0] || { caption: title }
 
+  // Proxy external URLs to clear CORS/ORB restrictions
+  const proxiedVideoUrl = getProxiedUrl(currentScene?.videoUrl)
+  const proxiedImageUrl = getProxiedUrl(currentScene?.imageUrl)
+  const proxiedAudioUrl = getProxiedUrl(audioUrl)
+
   return (
     <AbsoluteFill className="bg-slate-950 text-white flex flex-col items-center justify-between p-10 font-sans relative overflow-hidden">
       {/* Visual Background Rendering */}
-      {currentScene?.videoUrl ? (
-        <Video
-          src={currentScene.videoUrl}
+      {proxiedVideoUrl ? (
+        <OffthreadVideo
+          src={proxiedVideoUrl}
           className="absolute inset-0 w-full h-full object-cover opacity-75"
           muted
+          onError={(err) => console.error("Remotion OffthreadVideo error:", err)}
         />
-      ) : currentScene?.imageUrl ? (
+      ) : proxiedImageUrl ? (
         <Img
-          src={currentScene.imageUrl}
+          src={proxiedImageUrl}
           className="absolute inset-0 w-full h-full object-cover opacity-75"
         />
       ) : (
@@ -45,7 +59,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({ title, scenes, audioUrl })
       )}
 
       {/* Audio Layer */}
-      {audioUrl ? <Audio src={audioUrl} /> : null}
+      {proxiedAudioUrl ? <Audio src={proxiedAudioUrl} /> : null}
 
       {/* Top Badge */}
       <div className="relative z-10 mt-6 bg-indigo-600/70 backdrop-blur-md rounded-full px-5 py-2 border border-indigo-400/40">
