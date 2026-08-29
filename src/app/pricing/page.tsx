@@ -81,7 +81,7 @@ export default function PricingPage() {
       <div className="fixed bottom-0 right-1/3 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* HEADER BAR */}
-      <header className="w-full border-b border-purple-900/40 bg-[#0c0c1e]/90 backdrop-blur-xl px-6 py-4 flex items-center justify-between z-20">
+      <header className="w-full border-b border-purple-900/40 bg-[#0c0c1e]/90 backdrop-blur-xl px-6 py-4 flex items-center justify-between z-20 sticky top-0">
         <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-amber-300 text-xs font-bold transition">
           <ArrowLeft className="w-4 h-4" /> Back to Workspace
         </Link>
@@ -114,7 +114,7 @@ export default function PricingPage() {
             <div className="bg-[#0f0f24] border border-purple-800/30 p-1 rounded-2xl flex items-center gap-1">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                   billingCycle === 'monthly'
                     ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'text-slate-400 hover:text-white'
@@ -124,7 +124,7 @@ export default function PricingPage() {
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                   billingCycle === 'yearly'
                     ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'text-slate-400 hover:text-white'
@@ -140,13 +140,13 @@ export default function PricingPage() {
         </div>
 
         {/* SUBSCRIPTION CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full items-stretch">
           {subscriptionPlans.map((plan, idx) => (
             <div
               key={idx}
               className={`relative bg-[#0f0f24]/90 border rounded-3xl p-6 flex flex-col justify-between backdrop-blur-2xl transition-all hover:border-amber-400/50 ${
                 plan.popular
-                  ? 'border-amber-400 shadow-2xl shadow-amber-500/10 ring-1 ring-amber-400/30 scale-105 z-10'
+                  ? 'border-amber-400 shadow-2xl shadow-amber-500/10 ring-1 ring-amber-400/30 md:-translate-y-2 z-10'
                   : 'border-purple-800/30'
               }`}
             >
