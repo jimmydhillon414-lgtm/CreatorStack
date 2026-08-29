@@ -72,7 +72,7 @@ export default function Home() {
     } catch (err) {
       console.error(err);
       setErrorMsg('Network error. Check server console.');
-    } font-sans finally {
+    } finally {
       setLoading(false);
     }
   };
