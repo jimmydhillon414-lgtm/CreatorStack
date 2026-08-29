@@ -1,5 +1,5 @@
-import { Composition } from 'remotion'
-import { MainVideo, type MainVideoProps } from './MainVideo'
+import { Composition } from 'remotion';
+import { MainVideo, type MainVideoProps } from './MainVideo';
 
 const defaultVideoProps: MainVideoProps = {
   title: 'Top 3 High-Growth Stocks 2026',
@@ -13,20 +13,18 @@ const defaultVideoProps: MainVideoProps = {
     },
   ],
   audioUrl: '',
-}
+};
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <>
-      <Composition
-        id="CreatorStackVideo"
-        component={MainVideo}
-        durationInFrames={450}
-        fps={30}
-        width={1080}
-        height={1920}
-        defaultProps={defaultVideoProps}
-      />
-    </>
-  )
-}
+    <Composition
+      id="CreatorStackVideo"
+      component={MainVideo}
+      durationInFrames={450}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={defaultVideoProps}
+    />
+  );
+};
