@@ -30,10 +30,10 @@ body {
    ========================================================= */
 
 /* Modal Outer Box Size */
+/* Clerk modal container scaling */
 .cl-modalContent {
-  width: 680px !important;
-  max-width: 92vw !important;
-  transform: scale(1.1) !important;
+  transform: scale(0.85);
+  transform-origin: center center;
 }
 
 /* Card Container & Dark Background */
