@@ -24,3 +24,100 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================================
+   CLERK MODAL OVERRIDES (Enlarged Box & High-Contrast Text)
+   ========================================================= */
+
+/* Modal Outer Box Size */
+.cl-modalContent {
+  width: 680px !important;
+  max-width: 92vw !important;
+  transform: scale(1.1) !important;
+}
+
+/* Card Container & Dark Background */
+.cl-card {
+  background-color: #0f0f24 !important;
+  border: 1px solid rgba(147, 51, 234, 0.4) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+  padding: 2.5rem !important;
+}
+
+/* Title Styling */
+.cl-headerTitle {
+  color: #fbbf24 !important;
+  font-size: 1.85rem !important;
+  font-weight: 900 !important;
+}
+
+/* Subtitles, Labels & Small Text */
+.cl-headerSubtitle, 
+.cl-dividerText, 
+.cl-footerActionText {
+  color: #cbd5e1 !important;
+  font-size: 1rem !important;
+}
+
+/* Social Login Button (e.g., Google Sign In) */
+.cl-socialButtonsBlockButton {
+  background-color: #070712 !important;
+  border: 1px solid rgba(147, 51, 234, 0.5) !important;
+  padding: 0.9rem 1.25rem !important;
+  border-radius: 0.85rem !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+/* Input Form Labels */
+.cl-formFieldLabel {
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+/* Input Fields */
+.cl-formFieldInput {
+  background-color: #070712 !important;
+  border: 1px solid rgba(147, 51, 234, 0.5) !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  padding: 0.85rem 1rem !important;
+  border-radius: 0.85rem !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #f59e0b !important;
+  outline: none !important;
+}
+
+/* Primary Action Button (Continue) */
+.cl-formButtonPrimary {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  padding: 0.9rem !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3) !important;
+}
+
+.cl-formButtonPrimary:hover {
+  background-color: #d97706 !important;
+}
+
+/* Footer Action Links */
+.cl-footerActionLink {
+  color: #fbbf24 !important;
+  font-weight: 800 !important;
+}
+
+.cl-userButtonPopoverCard {
+  background-color: #0f0f24 !important;
+  color: #ffffff !important;
+}

@@ -9,13 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.8.0",
+    "@clerk/nextjs": "^7.8.3",
+    "@clerk/themes": "^2.4.57",
     "@deepgram/sdk": "^5.8.0",
     "@google/genai": "^2.18.0",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.3",
     "@remotion/media-utils": "^4.0.516",
     "@remotion/player": "^4.0.516",
     "@supabase/supabase-js": "^2.112.3",
+    "lucide-react": "^1.37.0",
     "next": "16.3.2",
     "prisma": "^6.19.3",
     "react": "19.2.8",
