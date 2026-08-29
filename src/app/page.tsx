@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { 
   useUser, 
   SignInButton, 
@@ -71,7 +72,7 @@ export default function Home() {
     } catch (err) {
       console.error(err);
       setErrorMsg('Network error. Check server console.');
-    } finally {
+    } font-sans finally {
       setLoading(false);
     }
   };
@@ -101,12 +102,12 @@ export default function Home() {
           </div>
 
           {userTier === 'free' ? (
-            <button 
-              onClick={() => setUserTier('pro')}
+            <Link 
+              href="/pricing"
               className="flex items-center gap-2 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 hover:brightness-110 text-slate-950 text-xs font-black px-4 py-2 rounded-full transition-all shadow-xl shadow-amber-500/30 active:scale-95 cursor-pointer"
             >
               <Crown className="w-4 h-4 fill-slate-950" /> Upgrade Pro
-            </button>
+            </Link>
           ) : (
             <span className="bg-purple-900/40 border border-purple-500/50 text-purple-300 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-2">
               <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> PRO MEMBER
