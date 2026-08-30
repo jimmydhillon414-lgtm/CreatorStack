@@ -28,7 +28,7 @@ export default function RootLayout({
       localization={{
         signIn: {
           start: {
-            subtitle: "", // Yahan aap custom text likh sakte hain, khali ("") chhodne se subtitle hide ho jayega
+            subtitle: "",
           },
         },
       }}
@@ -36,13 +36,14 @@ export default function RootLayout({
         variables: {
           colorPrimary: "#f59e0b",
           colorBackground: "#0f0f24",
-          borderRadius: "1rem",
+          borderRadius: "1.5rem",
         },
         elements: {
-          modalContent: "max-w-md w-full scale-90", // Size fit karne ke liye scale-110 ko scale-90 aur max-w-xl ko max-w-md kar diya hai
+          modalContent: "max-w-lg w-full scale-100", 
           cardBox: "w-full shadow-2xl border border-purple-800/40 rounded-3xl",
-          card: "w-full p-6 bg-[#0f0f24] text-white",
-          formFieldInput: "bg-[#070712] border-purple-800/50 text-white focus:border-amber-400",
+          card: "w-full p-8 bg-[#0f0f24] text-white",
+          formFieldInput: "bg-[#070712] border-purple-800/50 text-white focus:border-amber-400 py-3 text-base",
+          formButtonPrimary: "py-3.5 text-base font-bold",
         },
       }}
     >
